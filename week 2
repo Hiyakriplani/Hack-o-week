@@ -10,3 +10,4 @@ def clean_query(text):
     # Lemmatization + removing 'noise' (punctuation/stopwords)
     tokens = [token.lemma_ for token in doc if not token.is_stop and not token.is_punct]
     return " ".join(tokens)
+
