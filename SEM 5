@@ -1,0 +1,410 @@
+# ============================================================
+# HACK-O-WEEK 
+# ============================================================
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# ------------------------------------------------------------
+# 1. CREATE SAMPLE DATA
+# ------------------------------------------------------------
+
+students_data = {
+    "Student_ID": [101, 102, 103, 104, 105, 106, 107, 108,
+                   109, 110, 111, 112],
+    
+    "Name": ["Aarav", "Priya", "Rohan", "Ananya", "Kabir",
+             "Sneha", "Arjun", "Ishita", "Rahul", "Meera",
+             "Aditya", "Neha"],
+    
+    "Python": [85, 78, 92, 67, 88, 74, 95, 81, 69, 90, 76, 84],
+    "NumPy": [82, 80, 89, 70, 91, 72, 94, 79, 65, 88, 78, 86],
+    "Pandas": [88, 76, 94, 72, 85, 78, 96, 83, 71, 92, 80, 87]
+}
+
+marks_df = pd.DataFrame(students_data)
+
+attendance_data = {
+    "Student_ID": [101, 102, 103, 104, 105, 106, 107, 108,
+                   109, 110, 111, 112],
+    
+    "Attendance": [92, 88, 95, 76, 90, 82, 97, 89, 74, 94, 85, 91]
+}
+
+attendance_df = pd.DataFrame(attendance_data)
+
+print("STUDENT MARKS DATA")
+print(marks_df)
+
+print("\nATTENDANCE DATA")
+print(attendance_df)
+
+
+# ------------------------------------------------------------
+# 2. DATA CLEANING
+# ------------------------------------------------------------
+
+print("\n--- DATA CLEANING ---")
+
+# Check missing values
+print("\nMissing Values:")
+print(marks_df.isnull().sum())
+
+# Remove duplicate records
+marks_df = marks_df.drop_duplicates()
+
+# Fill missing numerical values if present
+numeric_columns = ["Python", "NumPy", "Pandas"]
+
+marks_df[numeric_columns] = marks_df[numeric_columns].fillna(
+    marks_df[numeric_columns].mean()
+)
+
+print("\nCleaned Data:")
+print(marks_df)
+
+
+# ------------------------------------------------------------
+# 3. NUMPY ARRAYS
+# ------------------------------------------------------------
+
+print("\n--- NUMPY OPERATIONS ---")
+
+marks_array = marks_df[numeric_columns].to_numpy()
+
+print("Marks Array:")
+print(marks_array)
+
+# Vectorized operation
+total_marks = np.sum(marks_array, axis=1)
+
+average_marks = np.mean(marks_array, axis=1)
+
+print("\nTotal Marks:")
+print(total_marks)
+
+print("\nAverage Marks:")
+print(average_marks)
+
+
+# ------------------------------------------------------------
+# 4. NUMPY BROADCASTING
+# ------------------------------------------------------------
+
+# Add 2 bonus marks to every subject
+bonus_marks = marks_array + 2
+
+# Make sure marks do not exceed 100
+bonus_marks = np.minimum(bonus_marks, 100)
+
+print("\nMarks after broadcasting +2 bonus marks:")
+print(bonus_marks)
+
+
+# ------------------------------------------------------------
+# 5. PYTHON FUNCTIONS
+# ------------------------------------------------------------
+
+def calculate_grade(average):
+    if average >= 90:
+        return "A+"
+    elif average >= 80:
+        return "A"
+    elif average >= 70:
+        return "B"
+    elif average >= 60:
+        return "C"
+    elif average >= 50:
+        return "D"
+    else:
+        return "F"
+
+
+def performance_status(average):
+    if average >= 75:
+        return "Excellent"
+    elif average >= 60:
+        return "Good"
+    elif average >= 50:
+        return "Average"
+    else:
+        return "Needs Improvement"
+
+
+# ------------------------------------------------------------
+# 6. ADD CALCULATED COLUMNS
+# ------------------------------------------------------------
+
+marks_df["Total"] = total_marks
+marks_df["Average"] = average_marks
+
+marks_df["Grade"] = [
+    calculate_grade(avg)
+    for avg in marks_df["Average"]
+]
+
+marks_df["Performance"] = [
+    performance_status(avg)
+    for avg in marks_df["Average"]
+]
+
+print("\n--- PROCESSED STUDENT DATA ---")
+print(marks_df)
+
+
+# ------------------------------------------------------------
+# 7. DICTIONARY COMPREHENSION
+# ------------------------------------------------------------
+
+subject_averages = {
+    subject: round(marks_df[subject].mean(), 2)
+    for subject in numeric_columns
+}
+
+print("\n--- SUBJECT AVERAGES ---")
+print(subject_averages)
+
+
+# ------------------------------------------------------------
+# 8. OOP - STUDENT ANALYZER CLASS
+# ------------------------------------------------------------
+
+class StudentAnalyzer:
+
+    def __init__(self, dataframe):
+        self.data = dataframe
+
+    def top_student(self):
+        student = self.data.loc[
+            self.data["Average"].idxmax()
+        ]
+        return student["Name"]
+
+    def class_average(self):
+        return self.data["Average"].mean()
+
+    def highest_subject(self):
+        averages = self.data[numeric_columns].mean()
+        return averages.idxmax()
+
+    def lowest_subject(self):
+        averages = self.data[numeric_columns].mean()
+        return averages.idxmin()
+
+
+analyzer = StudentAnalyzer(marks_df)
+
+print("\n--- ANALYZER RESULTS ---")
+
+print("Top Student:", analyzer.top_student())
+
+print(
+    "Class Average:",
+    round(analyzer.class_average(), 2)
+)
+
+print(
+    "Highest Performing Subject:",
+    analyzer.highest_subject()
+)
+
+print(
+    "Lowest Performing Subject:",
+    analyzer.lowest_subject()
+)
+
+
+# ------------------------------------------------------------
+# 9. PANDAS MERGING
+# ------------------------------------------------------------
+
+final_df = pd.merge(
+    marks_df,
+    attendance_df,
+    on="Student_ID",
+    how="left"
+)
+
+print("\n--- MERGED DATA ---")
+print(final_df)
+
+
+# ------------------------------------------------------------
+# 10. ATTENDANCE ANALYSIS
+# ------------------------------------------------------------
+
+final_df["Attendance_Status"] = [
+    "Good" if attendance >= 75 else "Low"
+    for attendance in final_df["Attendance"]
+]
+
+print("\n--- ATTENDANCE ANALYSIS ---")
+print(
+    final_df[
+        ["Name", "Attendance", "Attendance_Status"]
+    ]
+)
+
+
+# ------------------------------------------------------------
+# 11. PANDAS GROUPBY
+# ------------------------------------------------------------
+
+print("\n--- PERFORMANCE GROUPBY ---")
+
+performance_summary = final_df.groupby(
+    "Performance"
+)["Average"].mean()
+
+print(performance_summary)
+
+
+# ------------------------------------------------------------
+# 12. TOP 5 STUDENTS
+# ------------------------------------------------------------
+
+top_students = final_df.sort_values(
+    by="Average",
+    ascending=False
+).head(5)
+
+print("\n--- TOP 5 STUDENTS ---")
+print(
+    top_students[
+        ["Name", "Average", "Grade", "Attendance"]
+    ]
+)
+
+
+# ------------------------------------------------------------
+# 13. MATPLOTLIB - SUBJECT AVERAGES
+# ------------------------------------------------------------
+
+subject_avg = final_df[numeric_columns].mean()
+
+plt.figure(figsize=(8, 5))
+
+plt.bar(
+    subject_avg.index,
+    subject_avg.values
+)
+
+plt.title("Average Marks by Subject")
+plt.xlabel("Subject")
+plt.ylabel("Average Marks")
+
+plt.ylim(0, 100)
+plt.show()
+
+
+# ------------------------------------------------------------
+# 14. MATPLOTLIB - STUDENT PERFORMANCE
+# ------------------------------------------------------------
+
+plt.figure(figsize=(10, 5))
+
+plt.plot(
+    final_df["Name"],
+    final_df["Average"],
+    marker="o"
+)
+
+plt.title("Student Average Performance")
+plt.xlabel("Student")
+plt.ylabel("Average Marks")
+
+plt.xticks(rotation=45)
+plt.grid(True)
+
+plt.show()
+
+
+# ------------------------------------------------------------
+# 15. SEABORN - MARKS DISTRIBUTION
+# ------------------------------------------------------------
+
+plt.figure(figsize=(8, 5))
+
+sns.boxplot(
+    data=final_df[numeric_columns]
+)
+
+plt.title("Distribution of Subject Marks")
+plt.xlabel("Subjects")
+plt.ylabel("Marks")
+
+plt.show()
+
+
+# ------------------------------------------------------------
+# 16. SEABORN - CORRELATION HEATMAP
+# ------------------------------------------------------------
+
+plt.figure(figsize=(8, 6))
+
+correlation = final_df[
+    numeric_columns + ["Attendance", "Average"]
+].corr()
+
+sns.heatmap(
+    correlation,
+    annot=True,
+    cmap="coolwarm",
+    fmt=".2f"
+)
+
+plt.title("Student Performance Correlation Heatmap")
+
+plt.show()
+
+
+# ------------------------------------------------------------
+# 17. AUTOMATED REPORT
+# ------------------------------------------------------------
+
+print("\n" + "=" * 50)
+print("        STUDENT PERFORMANCE REPORT")
+print("=" * 50)
+
+print(
+    f"Total Students: {len(final_df)}"
+)
+
+print(
+    f"Class Average: {final_df['Average'].mean():.2f}"
+)
+
+print(
+    f"Highest Subject: {analyzer.highest_subject()}"
+)
+
+print(
+    f"Lowest Subject: {analyzer.lowest_subject()}"
+)
+
+print(
+    f"Top Student: {analyzer.top_student()}"
+)
+
+print(
+    f"Average Attendance: "
+    f"{final_df['Attendance'].mean():.2f}%"
+)
+
+print("\nGrade Distribution:")
+
+print(
+    final_df["Grade"].value_counts()
+)
+
+print("\nPerformance Distribution:")
+
+print(
+    final_df["Performance"].value_counts()
+)
+
+print("=" * 50)
+print("Analysis Completed Successfully!")
+print("=" * 50)
